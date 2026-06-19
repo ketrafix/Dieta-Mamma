@@ -100,6 +100,7 @@ export default function App() {
   const [showInfo, setShowInfo] = useState(false);
   const [showTracker, setShowTracker] = useState(false);
   const [showShoppingList, setShowShoppingList] = useState(false);
+  const [showGeneratorConfirm, setShowGeneratorConfirm] = useState(false);
   const [newCustomItem, setNewCustomItem] = useState("");
 
   const scrollRef = useRef(null);
@@ -142,10 +143,10 @@ export default function App() {
   const isCurrentDayLocked = completedDays[selectedDay];
 
   const generateRandomPlan = () => {
-    if(!window.confirm("🪄 Vuoi creare un menù settimanale perfetto? Distribuirò le proteine rispettando tutti i limiti e metterò la Pizza il Venerdì!")) return;
-    
-    // Pool esatto di 13 pasti (esclusa la pizza che è fissa)
-    let exactPool = [
+    const shuffle = (arr) => [...arr].sort(() => Math.random() - 0.5);
+
+    // 1. POOL PROTEINE (Esattamente 13 pasti + Pizza venerdì)
+    let poolPro = shuffle([
       ...Array(3).fill(proteinRules.carne_bianca.items[0]),
       ...Array(1).fill(proteinRules.carne_rossa.items[0]),
       ...Array(2).fill(proteinRules.pesce_magro.items[0]),
@@ -154,32 +155,53 @@ export default function App() {
       ...Array(2).fill(proteinRules.affettato.items[0]),
       ...Array(1).fill(proteinRules.formaggio.items[0]),
       ...Array(2).fill(proteinRules.legumi.items[0])
-    ];
-    
-    exactPool.sort(() => Math.random() - 0.5);
+    ]);
+
+    // 2. POOL CARBOIDRATI PRANZO (Sceglie 7 varianti uniche per non mangiare sempre la stessa cosa)
+    let poolPranzoCarbo = shuffle([...opzioniPranzoCarbo]).slice(0, 7);
+
+    // 3. POOL CARBOIDRATI CENA (Sceglie 6 varianti uniche, escludendo il 'Nessun carboidrato')
+    let poolCenaCarboOpzioni = opzioniCenaCarbo.filter(c => !c.includes("Nessun"));
+    let poolCenaCarbo = shuffle(poolCenaCarboOpzioni).slice(0, 6);
+
+    // 4. POOL PRIMI CENA (Bilanciato: 3 minestre/passati, 2 yogurt, 2 sere senza primo)
+    let poolCenaPrimo = shuffle([
+      opzioniCenaPrimo[0], opzioniCenaPrimo[0], opzioniCenaPrimo[0],
+      opzioniCenaPrimo[1], opzioniCenaPrimo[1],
+      opzioniCenaPrimo[2], opzioniCenaPrimo[2]
+    ]);
+
+    // 5. POOL COLAZIONE LIQ
+    let poolColazioneLiq = shuffle([
+      opzioniColazioneLiq[0], opzioniColazioneLiq[0], // 2 gg caffè/latte
+      opzioniColazioneLiq[1], opzioniColazioneLiq[1], // 2 gg yogurt 250
+      opzioniColazioneLiq[2], opzioniColazioneLiq[2], // 2 gg yogurt+frutta
+      opzioniColazioneLiq[3]                          // 1 gg ricotta
+    ]);
+
+    // 6. POOL COLAZIONE SOL (Sceglie 7 varianti uniche)
+    let poolColazioneSol = shuffle([...opzioniColazioneSol]).slice(0, 7);
 
     let newPlan = {};
     
     giorni.forEach((giorno) => {
       const isFriday = giorno === "Venerdì";
       
-      let pranzoPro = exactPool.pop();
-      let cenaPro = isFriday ? proteinRules.pizza.items[0] : exactPool.pop();
-
       newPlan[giorno] = {
-        colazioneLiq: opzioniColazioneLiq[Math.floor(Math.random() * opzioniColazioneLiq.length)],
-        colazioneSol: opzioniColazioneSol[Math.floor(Math.random() * opzioniColazioneSol.length)],
-        pranzoCarbo: opzioniPranzoCarbo[Math.floor(Math.random() * opzioniPranzoCarbo.length)],
-        pranzoPro: pranzoPro,
-        cenaPrimo: opzioniCenaPrimo[Math.floor(Math.random() * opzioniCenaPrimo.length)],
-        cenaPro: cenaPro,
-        // Nessun carboidrato extra venerdì sera
-        cenaCarbo: isFriday ? opzioniCenaCarbo[12] : opzioniCenaCarbo[Math.floor(Math.random() * 12)],
+        colazioneLiq: poolColazioneLiq.pop(),
+        colazioneSol: poolColazioneSol.pop(),
+        pranzoCarbo: poolPranzoCarbo.pop(),
+        pranzoPro: poolPro.pop(),
+        cenaPrimo: poolCenaPrimo.pop(),
+        cenaPro: isFriday ? proteinRules.pizza.items[0] : poolPro.pop(),
+        // Il venerdì sera non assegna carboidrati extra vista la pizza
+        cenaCarbo: isFriday ? opzioniCenaCarbo[12] : poolCenaCarbo.pop(),
       };
     });
 
     setPlan(newPlan);
-    setCompletedDays({}); // Sblocca tutte le giornate
+    setCompletedDays({}); // Sblocca tutte le giornate per ripartire
+    setShowGeneratorConfirm(false); // Chiude il popup
   };
 
   const addCustomItem = (e) => {
@@ -293,7 +315,7 @@ export default function App() {
           
           <div className="flex gap-1.5 sm:gap-2">
             <button 
-              onClick={generateRandomPlan}
+              onClick={() => setShowGeneratorConfirm(true)}
               className="p-2 sm:p-3 bg-fuchsia-100 dark:bg-fuchsia-900/40 text-fuchsia-700 dark:text-fuchsia-400 active:scale-90 rounded-xl transition-all border-2 border-fuchsia-200 dark:border-fuchsia-800 shadow-sm flex items-center justify-center hover:bg-fuchsia-200 dark:hover:bg-fuchsia-800"
               title="Genera Menù Casuale Perfetto"
             >
@@ -413,6 +435,42 @@ export default function App() {
               <PieChart className="w-6 h-6" /> <span className="font-bold">Bilancio</span>
           </button>
       </div>
+
+      {/* POPUP GENERATORE MAGICO */}
+      {showGeneratorConfirm && (
+        <Modal 
+          title="Generazione Magica ✨" 
+          icon={<Wand2 className="w-6 h-6" />} 
+          onClose={() => setShowGeneratorConfirm(false)} 
+          color="fuchsia"
+          footer={
+            <div className="flex gap-3 w-full">
+              <button onClick={() => setShowGeneratorConfirm(false)} className="flex-1 py-4 rounded-2xl font-bold border-2 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all active:scale-[0.98]">Annulla</button>
+              <button onClick={generateRandomPlan} className="flex-[2] py-4 rounded-2xl font-bold bg-fuchsia-600 border-2 border-fuchsia-600 text-white shadow-lg shadow-fuchsia-600/30 hover:bg-fuchsia-500 active:scale-[0.98] transition-all">Genera Menù</button>
+            </div>
+          }
+        >
+          <div className="bg-fuchsia-50 dark:bg-fuchsia-900/20 p-5 rounded-2xl border-2 border-fuchsia-200 dark:border-fuchsia-800/50 mb-4 text-fuchsia-900 dark:text-fuchsia-100 shadow-sm">
+            <p className="font-medium text-[15px] leading-relaxed">
+              Stai per creare un <strong>menù settimanale bilanciato</strong> in modo automatico. L'algoritmo non si ferma alle proteine: ottimizzerà <strong>tutti i nutrienti e carboidrati</strong> per garantirti la massima varietà ogni giorno.
+            </p>
+          </div>
+          <ul className="space-y-3 bg-white dark:bg-slate-800 p-4 rounded-2xl border-2 border-slate-100 dark:border-slate-700">
+            <li className="flex items-start gap-3 text-sm text-slate-700 dark:text-slate-300 font-medium">
+              <CheckCircle2 className="w-5 h-5 text-fuchsia-500 flex-shrink-0"/> 
+              <span><strong>Tutte le proteine bilanciate</strong> al 100% secondo i limiti massimi settimanali.</span>
+            </li>
+            <li className="flex items-start gap-3 text-sm text-slate-700 dark:text-slate-300 font-medium">
+              <CheckCircle2 className="w-5 h-5 text-fuchsia-500 flex-shrink-0"/> 
+              <span><strong>Carboidrati sempre diversi:</strong> rimescolamento completo di pasta, riso, farro, patate, pane, ecc.</span>
+            </li>
+            <li className="flex items-start gap-3 text-sm text-slate-700 dark:text-slate-300 font-medium">
+              <CheckCircle2 className="w-5 h-5 text-fuchsia-500 flex-shrink-0"/> 
+              <span><strong>Venerdì sera = Pizza:</strong> La pizza viene assegnata automaticamente al venerdì senza eccedere con altri carboidrati extra.</span>
+            </li>
+          </ul>
+        </Modal>
+      )}
 
       {showTracker && (
         <Modal title="Bilancio Settimanale" icon={<PieChart className="w-6 h-6" />} onClose={() => setShowTracker(false)}>
@@ -639,14 +697,15 @@ function FixedItem({ text }) {
   );
 }
 
-function Modal({ title, icon, children, onClose, color = "emerald", extraAction }) {
+function Modal({ title, icon, children, onClose, color = "emerald", extraAction, footer }) {
   const colorMap = {
     emerald: { text: "text-emerald-800 dark:text-emerald-100", bg: "bg-emerald-100 dark:bg-emerald-900/50", icon: "text-emerald-600 dark:text-emerald-400", btn: "bg-emerald-600 hover:bg-emerald-500 border-emerald-600" },
     blue: { text: "text-blue-800 dark:text-blue-100", bg: "bg-blue-100 dark:bg-blue-900/50", icon: "text-blue-600 dark:text-blue-400", btn: "bg-blue-600 hover:bg-blue-500 border-blue-600" },
-    amber: { text: "text-amber-800 dark:text-amber-100", bg: "bg-amber-100 dark:bg-amber-900/50", icon: "text-amber-600 dark:text-amber-400", btn: "bg-amber-600 hover:bg-amber-500 border-amber-600" }
+    amber: { text: "text-amber-800 dark:text-amber-100", bg: "bg-amber-100 dark:bg-amber-900/50", icon: "text-amber-600 dark:text-amber-400", btn: "bg-amber-600 hover:bg-amber-500 border-amber-600" },
+    fuchsia: { text: "text-fuchsia-800 dark:text-fuchsia-100", bg: "bg-fuchsia-100 dark:bg-fuchsia-900/50", icon: "text-fuchsia-600 dark:text-fuchsia-400", btn: "bg-fuchsia-600 hover:bg-fuchsia-500 border-fuchsia-600" }
   };
 
-  const theme = colorMap[color];
+  const theme = colorMap[color] || colorMap.emerald;
 
   return (
     <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-end sm:items-center justify-center sm:p-4 z-50 animate-in fade-in duration-200">
@@ -667,7 +726,9 @@ function Modal({ title, icon, children, onClose, color = "emerald", extraAction 
           {children}
         </div>
         <div className="p-4 sm:p-5 border-t-2 border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 sm:rounded-b-3xl">
-          <button onClick={onClose} className={`w-full text-white font-extrabold text-base sm:text-lg py-3 sm:py-4 rounded-2xl shadow-lg transition-all active:scale-[0.98] border-2 ${theme.btn}`}>Chiudi</button>
+          {footer !== undefined ? footer : (
+            <button onClick={onClose} className={`w-full text-white font-extrabold text-base sm:text-lg py-3 sm:py-4 rounded-2xl shadow-lg transition-all active:scale-[0.98] border-2 ${theme.btn}`}>Chiudi</button>
+          )}
         </div>
       </div>
     </div>
