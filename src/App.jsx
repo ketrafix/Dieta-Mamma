@@ -3,7 +3,7 @@ import {
   Info, Coffee, Sun, Moon, 
   Apple, Droplet, CheckCircle2, ChevronDown, 
   AlertCircle, PieChart, Check, X,
-  ShoppingCart, Lock, Unlock, ListChecks
+  ShoppingCart, Lock, Unlock, ListChecks, Trash2
 } from 'lucide-react';
 
 const opzioniColazioneLiq = [
@@ -87,6 +87,11 @@ export default function App() {
     return saved ? JSON.parse(saved) : {};
   });
 
+  const [shoppingCart, setShoppingCart] = useState(() => {
+    const saved = localStorage.getItem('smartDietCart');
+    return saved ? JSON.parse(saved) : {};
+  });
+
   const [isDarkMode, setIsDarkMode] = useState(() => {
     const saved = localStorage.getItem('smartDietTheme');
     return saved === 'dark';
@@ -109,6 +114,7 @@ export default function App() {
 
   useEffect(() => localStorage.setItem('smartDietPlan', JSON.stringify(plan)), [plan]);
   useEffect(() => localStorage.setItem('smartDietCompleted', JSON.stringify(completedDays)), [completedDays]);
+  useEffect(() => localStorage.setItem('smartDietCart', JSON.stringify(shoppingCart)), [shoppingCart]);
 
   const handleUpdate = (mealKey, value) => setPlan(prev => ({ ...prev, [selectedDay]: { ...prev[selectedDay], [mealKey]: value } }));
   const toggleCompleted = () => setCompletedDays(prev => ({ ...prev, [selectedDay]: !prev[selectedDay] }));
@@ -137,20 +143,17 @@ export default function App() {
     const list = {};
     
     // Aggiunte fisse automatiche
-    list["Verdura (Cotta o Cruda)"] = { qty: 14, unit: "porzioni" }; // 2 al gg x 7
-    list["Olio d'Oliva Extra Vergine"] = { qty: 175, unit: "g" }; // 25g al gg x 7
-    list["Frutta Fresca"] = { qty: 1750, unit: "g" }; // 125g x 2 pasti x 7
-    list["Acqua"] = { qty: 10.5, unit: "Litri" }; // 1.5L x 7
+    list["Verdura (Cotta o Cruda)"] = { qty: 14, unit: "porzioni" }; 
+    list["Olio d'Oliva Extra Vergine"] = { qty: 175, unit: "g" }; 
+    list["Frutta Fresca"] = { qty: 1750, unit: "g" }; 
+    list["Acqua"] = { qty: 10.5, unit: "Litri" }; 
 
     Object.values(plan).forEach(day => {
       const cibi = [day.colazioneLiq, day.colazioneSol, day.pranzoCarbo, day.pranzoPro, day.cenaPrimo, day.cenaPro, day.cenaCarbo];
       
       cibi.forEach(cibo => {
         if (cibo && !cibo.includes("Nessun") && !cibo.includes("Pizza")) {
-          // Rimuove la regola (Max Xv/sett) per pulire il nome
           let cleanStr = cibo.split("- (Max")[0].trim();
-          
-          // Estrae quantità e unità di misura con una Regex (es. "Pasta 60 g" -> "Pasta", 60, "g")
           let match = cleanStr.match(/(.*?)(\d+)\s*(g|ml|pz)$/i);
           let itemName = cleanStr;
           let qty = 1;
@@ -162,7 +165,6 @@ export default function App() {
             unit = match[3].toLowerCase();
           }
 
-          // Unifica cibi simili 
           if(itemName.includes("Yogurt magro")) itemName = "Yogurt magro naturale";
           if(itemName.includes("Pane integrale o di segale")) itemName = "Pane integrale o segale";
 
@@ -174,7 +176,6 @@ export default function App() {
       });
     });
     
-    // Converte l'oggetto in array e ordina in ordine alfabetico
     return Object.entries(list).map(([name, data]) => ({ name, ...data })).sort((a, b) => a.name.localeCompare(b.name));
   }, [plan]);
 
@@ -185,7 +186,7 @@ export default function App() {
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-200 font-sans pb-32 transition-colors duration-300">
       
       {/* HEADER */}
-      <header className="bg-white dark:bg-slate-800 sticky top-0 z-20 border-b border-slate-200 dark:border-slate-700 shadow-sm transition-colors duration-300">
+      <header className="bg-white dark:bg-slate-800 sticky top-0 z-20 border-b-2 border-slate-200 dark:border-slate-700 shadow-sm transition-colors duration-300">
         <div className="max-w-3xl mx-auto flex justify-between items-center p-4">
           <div className="flex items-center gap-3">
             <div className="bg-emerald-500 dark:bg-emerald-600 p-2.5 rounded-2xl shadow-lg shadow-emerald-500/30">
@@ -198,30 +199,29 @@ export default function App() {
           </div>
           
           <div className="flex gap-2">
-            {/* Bottone Dark Mode */}
             <button 
               onClick={() => setIsDarkMode(!isDarkMode)}
-              className="p-3 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-200 rounded-xl active:scale-90 transition-all shadow-sm flex items-center justify-center"
+              className="p-3 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-200 rounded-xl active:scale-90 transition-all shadow-sm flex items-center justify-center border-2 border-transparent"
               aria-label="Modalità Scura"
             >
-              {isDarkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+              {isDarkMode ? <Sun className="w-5 h-5 text-yellow-400" /> : <Moon className="w-5 h-5 text-slate-700" />}
             </button>
             <button 
               onClick={() => setShowShoppingList(true)}
-              className="p-3 bg-white dark:bg-slate-800 text-emerald-600 dark:text-emerald-400 active:scale-90 rounded-xl transition-all border border-emerald-200 dark:border-emerald-800 shadow-sm flex items-center justify-center"
+              className="p-3 bg-white dark:bg-slate-800 text-emerald-600 dark:text-emerald-400 active:scale-90 rounded-xl transition-all border-2 border-emerald-200 dark:border-emerald-800 shadow-sm flex items-center justify-center hover:bg-emerald-50 dark:hover:bg-slate-700"
             >
               <ShoppingCart className="w-5 h-5" />
             </button>
             <button 
               onClick={() => setShowTracker(true)}
-              className="px-4 py-3 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 active:scale-95 rounded-xl transition-all flex items-center gap-2 font-bold text-sm border border-emerald-100 dark:border-emerald-800 shadow-sm"
+              className="px-4 py-3 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 active:scale-95 rounded-xl transition-all flex items-center gap-2 font-bold text-sm border-2 border-emerald-200 dark:border-emerald-800 shadow-sm hover:bg-emerald-100 dark:hover:bg-emerald-900/50"
             >
               <PieChart className="w-5 h-5" />
               <span className="hidden sm:inline">Bilancio</span>
             </button>
             <button 
               onClick={() => setShowInfo(true)}
-              className="p-3 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 active:scale-90 rounded-xl transition-all border border-slate-200 dark:border-slate-600 shadow-sm flex items-center justify-center"
+              className="p-3 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 active:scale-90 rounded-xl transition-all border-2 border-slate-200 dark:border-slate-600 shadow-sm flex items-center justify-center hover:bg-slate-50 dark:hover:bg-slate-700"
             >
               <Info className="w-5 h-5" />
             </button>
@@ -241,8 +241,8 @@ export default function App() {
                 selectedDay === g 
                   ? 'bg-emerald-600 dark:bg-emerald-500 text-white border-emerald-600 shadow-lg shadow-emerald-500/30' 
                   : completedDays[g] 
-                    ? 'bg-emerald-50 dark:bg-emerald-900/40 text-emerald-800 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800 shadow-sm hover:bg-emerald-100 dark:hover:bg-emerald-900/60'
-                    : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 shadow-sm hover:bg-slate-50 dark:hover:bg-slate-700'
+                    ? 'bg-emerald-50 dark:bg-emerald-900/40 text-emerald-800 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800 shadow-sm hover:bg-emerald-100 dark:hover:bg-emerald-900/60'
+                    : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-300 dark:border-slate-600 shadow-sm hover:bg-slate-50 dark:hover:bg-slate-700'
               }`}
             >
               <span className="flex items-center gap-2">
@@ -253,11 +253,10 @@ export default function App() {
           ))}
         </div>
 
-        {}
         <div className={`transition-all duration-300 ${isCurrentDayLocked ? 'opacity-90' : ''}`}>
           
           {isCurrentDayLocked && (
-            <div className="bg-emerald-100/80 dark:bg-emerald-900/50 border border-emerald-200 dark:border-emerald-800 text-emerald-900 dark:text-emerald-100 px-4 py-3 rounded-2xl mb-6 flex items-center gap-3 shadow-inner">
+            <div className="bg-emerald-100/80 dark:bg-emerald-900/50 border-2 border-emerald-300 dark:border-emerald-800 text-emerald-900 dark:text-emerald-100 px-4 py-3 rounded-2xl mb-6 flex items-center gap-3 shadow-inner">
               <Lock className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
               <div>
                 <strong className="block text-sm">Giornata Chiusa!</strong>
@@ -293,14 +292,13 @@ export default function App() {
           </div>
         </div>
 
-        {}
         <div className="pt-4 pb-8">
           <button
             onClick={toggleCompleted}
-            className={`w-full py-5 rounded-2xl font-extrabold text-lg flex items-center justify-center gap-3 transition-all duration-300 active:scale-95 ${
+            className={`w-full py-5 rounded-2xl font-extrabold text-lg flex items-center justify-center gap-3 transition-all duration-300 active:scale-95 border-2 ${
               isCurrentDayLocked 
-                ? 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-2 border-slate-200 dark:border-slate-700 hover:bg-slate-200 dark:hover:bg-slate-700' 
-                : 'bg-emerald-500 text-white shadow-[0_0_20px_rgba(16,185,129,0.4)] hover:shadow-[0_0_30px_rgba(16,185,129,0.6)] hover:bg-emerald-400'
+                ? 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-slate-300 dark:border-slate-700 hover:bg-slate-200 dark:hover:bg-slate-700' 
+                : 'bg-emerald-500 border-emerald-600 text-white shadow-[0_0_20px_rgba(16,185,129,0.4)] hover:shadow-[0_0_30px_rgba(16,185,129,0.6)] hover:bg-emerald-400'
             }`}
           >
             {isCurrentDayLocked ? (
@@ -314,10 +312,10 @@ export default function App() {
       </main>
 
       {/* FOOTER CONDIMENTI */}
-      <div className="fixed bottom-0 w-full bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border-t border-slate-200 dark:border-slate-800 p-4 z-10 shadow-[0_-10px_30px_rgba(0,0,0,0.05)]">
+      <div className="fixed bottom-0 w-full bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border-t-2 border-slate-200 dark:border-slate-800 p-4 z-10 shadow-[0_-10px_30px_rgba(0,0,0,0.05)]">
         <div className="max-w-3xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="bg-emerald-100 dark:bg-emerald-900/50 p-2.5 rounded-xl">
+            <div className="bg-emerald-100 dark:bg-emerald-900/50 p-2.5 rounded-xl border border-emerald-200 dark:border-emerald-800">
               <Droplet className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
             </div>
             <div>
@@ -327,16 +325,15 @@ export default function App() {
           </div>
           <div className="text-right text-base text-slate-800 dark:text-slate-200">
             <span className="font-extrabold">25 g</span> <span className="text-sm text-slate-600 dark:text-slate-400">(8 cucchiaini)</span><br/>
-            <span className="text-xs text-slate-500 font-medium">1 cucchiaio olio = 15g frutta secca</span>
+            <span className="text-xs text-slate-500 font-medium">1 cucch. olio = 15g frutta secca</span>
           </div>
         </div>
       </div>
 
-      {}
       {/* MODAL BILANCIO */}
       {showTracker && (
         <Modal title="Bilancio Settimanale" icon={<PieChart className="w-6 h-6" />} onClose={() => setShowTracker(false)}>
-          <div className="bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800/50 p-4 rounded-2xl mb-6 shadow-sm">
+          <div className="bg-emerald-50 dark:bg-emerald-900/20 border-2 border-emerald-200 dark:border-emerald-800/50 p-4 rounded-2xl mb-6 shadow-sm">
             <p className="text-[15px] leading-relaxed text-emerald-900 dark:text-emerald-100 font-medium">
               Questo bilancio è precisissimo: calcola le proteine solo dei <strong className="bg-emerald-200 dark:bg-emerald-800 px-1.5 py-0.5 rounded text-emerald-900 dark:text-emerald-100">{daysCompletedCount} giorni confermati</strong> con il bottone a fine pagina.
             </p>
@@ -348,12 +345,12 @@ export default function App() {
               const remaining = stat.max - stat.count;
 
               return (
-                <div key={idx} className={`p-4 rounded-2xl border-2 transition-all ${isOver ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800/50' : isPerfect ? 'bg-emerald-50/50 dark:bg-emerald-900/20 border-emerald-400 dark:border-emerald-600' : 'bg-white dark:bg-slate-800 border-slate-100 dark:border-slate-700'}`}>
+                <div key={idx} className={`p-4 rounded-2xl border-2 transition-all ${isOver ? 'bg-red-50 dark:bg-red-900/20 border-red-300 dark:border-red-800/50' : isPerfect ? 'bg-emerald-50/50 dark:bg-emerald-900/20 border-emerald-400 dark:border-emerald-600' : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-600'}`}>
                   <div className="flex justify-between items-center mb-3">
                     <span className="font-bold text-slate-800 dark:text-slate-100 text-base">{stat.name}</span>
                     <div className="flex gap-1.5">
                       {Array.from({ length: Math.max(stat.max, stat.count) }).map((_, i) => (
-                        <div key={i} className={`w-4 h-4 rounded-full border ${i < stat.count ? (isOver ? 'bg-red-500 border-red-600' : 'bg-emerald-500 border-emerald-600') : 'bg-slate-100 dark:bg-slate-700 border-slate-200 dark:border-slate-600'}`} />
+                        <div key={i} className={`w-4 h-4 rounded-full border-2 ${i < stat.count ? (isOver ? 'bg-red-500 border-red-600' : 'bg-emerald-500 border-emerald-600') : 'bg-slate-100 dark:bg-slate-700 border-slate-300 dark:border-slate-600'}`} />
                       ))}
                     </div>
                   </div>
@@ -373,21 +370,56 @@ export default function App() {
         </Modal>
       )}
 
-      {/* MODAL LISTA SPESA (Intelligente) */}
+      {/* MODAL LISTA SPESA (Interattiva e con sconti) */}
       {showShoppingList && (
-        <Modal title="Spesa Totale (Sommata)" icon={<ListChecks className="w-6 h-6" />} onClose={() => setShowShoppingList(false)} color="blue">
-          <div className="bg-blue-50 dark:bg-blue-900/20 text-blue-900 dark:text-blue-100 px-4 py-3 rounded-2xl mb-6 shadow-sm border border-blue-100 dark:border-blue-800">
-            <p className="text-[15px] font-medium leading-relaxed">Ho letto tutto il tuo piano e ho <strong>sommato i grammi</strong> degli alimenti uguali. Fantastico, no?</p>
+        <Modal 
+          title="Spesa della Settimana" 
+          icon={<ListChecks className="w-6 h-6" />} 
+          onClose={() => setShowShoppingList(false)} 
+          color="blue"
+          extraAction={
+            <button 
+              onClick={() => { if(window.confirm("Vuoi rimuovere tutte le spunte della spesa?")) setShoppingCart({}); }}
+              className="p-2 bg-red-100 text-red-600 rounded-xl hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400 transition-colors"
+              title="Resetta spunte"
+            >
+              <Trash2 className="w-5 h-5"/>
+            </button>
+          }
+        >
+          {/* Promemoria Sconti */}
+          <div className="bg-amber-100 dark:bg-amber-900/30 p-4 rounded-2xl border-2 border-amber-300 dark:border-amber-700 mb-5 shadow-sm">
+            <h3 className="font-extrabold text-amber-900 dark:text-amber-400 mb-2 flex items-center gap-2">💡 Promemoria Sconti</h3>
+            <ul className="text-[15px] text-amber-800 dark:text-amber-300 space-y-1.5 ml-1 font-medium">
+              <li>• <strong>Giovedì:</strong> Carne in sconto al Gigante!</li>
+              <li>• <strong>Sabato & Domenica:</strong> Frutta e Verdura in offerta.</li>
+            </ul>
           </div>
-          <div className="space-y-2">
-            {shoppingList.map((item, idx) => (
-              <div key={idx} className="flex justify-between items-center p-4 bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-2xl shadow-sm hover:border-blue-200 dark:hover:border-blue-600 transition-colors">
-                <span className="text-[15px] font-semibold text-slate-700 dark:text-slate-200 pr-4">{item.name}</span>
-                <span className="flex-shrink-0 bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-300 font-black text-sm px-3 py-1.5 rounded-lg whitespace-nowrap">
-                  {item.qty} {item.unit}
-                </span>
-              </div>
-            ))}
+
+          <div className="space-y-3">
+            {shoppingList.map((item, idx) => {
+              const isChecked = shoppingCart[item.name];
+              return (
+                <button 
+                  key={idx} 
+                  onClick={() => setShoppingCart(prev => ({ ...prev, [item.name]: !prev[item.name] }))}
+                  className={`w-full flex justify-between items-center p-4 border-2 rounded-2xl transition-all active:scale-[0.98] ${
+                    isChecked 
+                      ? 'bg-slate-100 border-slate-200 text-slate-400 dark:bg-slate-800/50 dark:border-slate-700 dark:text-slate-500 line-through' 
+                      : 'bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-200 hover:border-blue-400 dark:hover:border-blue-500 shadow-sm'
+                  }`}
+                >
+                  <span className="text-[15px] font-bold pr-4 text-left">{item.name}</span>
+                  <span className={`flex-shrink-0 font-black text-sm px-3 py-1.5 rounded-lg whitespace-nowrap ${
+                    isChecked 
+                      ? 'bg-slate-200 text-slate-400 dark:bg-slate-700 dark:text-slate-500' 
+                      : 'bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-300'
+                  }`}>
+                    {item.qty} {item.unit}
+                  </span>
+                </button>
+              );
+            })}
           </div>
         </Modal>
       )}
@@ -401,7 +433,7 @@ export default function App() {
                 <span className="w-7 h-7 rounded-full bg-amber-100 dark:bg-amber-900/50 text-amber-600 dark:text-amber-400 flex items-center justify-center text-sm">1</span>
                 Regole Generali
               </h4>
-              <ul className="space-y-3 bg-amber-50/50 dark:bg-amber-900/10 p-5 rounded-2xl border border-amber-100 dark:border-amber-800/50">
+              <ul className="space-y-3 bg-amber-50/50 dark:bg-amber-900/10 p-5 rounded-2xl border-2 border-amber-200 dark:border-amber-800/50">
                 <li className="flex gap-3"><CheckCircle2 className="w-5 h-5 text-amber-500 flex-shrink-0"/> <span><strong>I pesi indicati sono a crudo</strong> e al netto degli scarti.</span></li>
                 <li className="flex gap-3"><CheckCircle2 className="w-5 h-5 text-amber-500 flex-shrink-0"/> <span>Non aggiungere zuccheri nelle bevande.</span></li>
                 <li className="flex gap-3"><CheckCircle2 className="w-5 h-5 text-amber-500 flex-shrink-0"/> <span>Bevi almeno <strong>1.5L di acqua</strong> al giorno.</span></li>
@@ -414,7 +446,7 @@ export default function App() {
                   ["Pasta", "x 2"], ["Riso", "x 2.5"], ["Gnocchi", "x 1.1"], 
                   ["Patate", "x 1"], ["Carne/Pesce", "x 0.8"], ["Legumi Secchi", "x 2.5"]
                 ].map(([nome, fattore], i) => (
-                  <div key={i} className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-4 rounded-xl flex justify-between shadow-sm">
+                  <div key={i} className="bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 p-4 rounded-xl flex justify-between shadow-sm">
                     <strong className="text-slate-800 dark:text-slate-200">{nome}</strong> 
                     <span className="text-emerald-600 dark:text-emerald-400 font-bold">{fattore}</span>
                   </div>
@@ -436,15 +468,15 @@ export default function App() {
 
 function MealCard({ title, icon, theme, children }) {
   const themeClasses = {
-    amber: "bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800/40 text-amber-900 dark:text-amber-100",
-    orange: "bg-orange-50 dark:bg-orange-900/20 border-orange-200 dark:border-orange-800/40 text-orange-900 dark:text-orange-100",
-    indigo: "bg-indigo-50 dark:bg-indigo-900/20 border-indigo-200 dark:border-indigo-800/40 text-indigo-900 dark:text-indigo-100"
+    amber: "bg-amber-50 dark:bg-amber-900/20 border-amber-300 dark:border-amber-800/40 text-amber-900 dark:text-amber-100",
+    orange: "bg-orange-50 dark:bg-orange-900/20 border-orange-300 dark:border-orange-800/40 text-orange-900 dark:text-orange-100",
+    indigo: "bg-indigo-50 dark:bg-indigo-900/20 border-indigo-300 dark:border-indigo-800/40 text-indigo-900 dark:text-indigo-100"
   };
 
   return (
-    <div className="bg-white dark:bg-slate-800 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden relative transition-colors duration-300">
-      <div className={`px-6 py-4 flex items-center gap-4 border-b ${themeClasses[theme]} transition-colors duration-300`}>
-        <div className="bg-white dark:bg-slate-800 p-2.5 rounded-xl shadow-sm">
+    <div className="bg-white dark:bg-slate-800 rounded-3xl shadow-sm border-2 border-slate-300 dark:border-slate-600 overflow-hidden relative transition-colors duration-300">
+      <div className={`px-6 py-4 flex items-center gap-4 border-b-2 ${themeClasses[theme]} transition-colors duration-300`}>
+        <div className="bg-white dark:bg-slate-800 p-2.5 rounded-xl shadow-sm border border-white/50 dark:border-slate-700">
           {icon}
         </div>
         <h2 className="text-2xl font-extrabold tracking-tight">{title}</h2>
@@ -465,7 +497,7 @@ function Dropdown({ label, options, value, onChange, locked }) {
           value={value} 
           onChange={(e) => onChange(e.target.value)}
           disabled={locked}
-          className={`w-full appearance-none border rounded-2xl px-5 py-4 pr-12 text-base font-bold transition-all shadow-sm outline-none
+          className={`w-full appearance-none border-2 rounded-2xl px-5 py-4 pr-12 text-base font-bold transition-all shadow-sm outline-none
             ${locked 
               ? 'bg-slate-50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-500 border-slate-200 dark:border-slate-700 opacity-80 cursor-not-allowed' 
               : 'bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 border-slate-300 dark:border-slate-600 hover:border-emerald-400 dark:hover:border-emerald-500 focus:ring-4 focus:ring-emerald-500/20 cursor-pointer active:scale-[0.99]'
@@ -486,39 +518,42 @@ function Dropdown({ label, options, value, onChange, locked }) {
 
 function FixedItem({ text }) {
   return (
-    <div className="flex items-center gap-3 bg-slate-50/80 dark:bg-slate-800/80 text-slate-600 dark:text-slate-300 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm transition-colors duration-300">
+    <div className="flex items-center gap-3 bg-slate-50/80 dark:bg-slate-800/80 text-slate-600 dark:text-slate-300 p-4 rounded-2xl border-2 border-slate-200 dark:border-slate-700 shadow-sm transition-colors duration-300">
       <CheckCircle2 className="w-5 h-5 text-emerald-400 dark:text-emerald-500 flex-shrink-0" />
       <span className="font-bold text-sm leading-tight">{text}</span>
     </div>
   );
 }
 
-function Modal({ title, icon, children, onClose, color = "emerald" }) {
+function Modal({ title, icon, children, onClose, color = "emerald", extraAction }) {
   const colorMap = {
-    emerald: { text: "text-emerald-800 dark:text-emerald-100", bg: "bg-emerald-100 dark:bg-emerald-900/50", icon: "text-emerald-600 dark:text-emerald-400", btn: "bg-emerald-600 hover:bg-emerald-500" },
-    blue: { text: "text-blue-800 dark:text-blue-100", bg: "bg-blue-100 dark:bg-blue-900/50", icon: "text-blue-600 dark:text-blue-400", btn: "bg-blue-600 hover:bg-blue-500" },
-    amber: { text: "text-amber-800 dark:text-amber-100", bg: "bg-amber-100 dark:bg-amber-900/50", icon: "text-amber-600 dark:text-amber-400", btn: "bg-amber-600 hover:bg-amber-500" }
+    emerald: { text: "text-emerald-800 dark:text-emerald-100", bg: "bg-emerald-100 dark:bg-emerald-900/50", icon: "text-emerald-600 dark:text-emerald-400", btn: "bg-emerald-600 hover:bg-emerald-500 border-emerald-600" },
+    blue: { text: "text-blue-800 dark:text-blue-100", bg: "bg-blue-100 dark:bg-blue-900/50", icon: "text-blue-600 dark:text-blue-400", btn: "bg-blue-600 hover:bg-blue-500 border-blue-600" },
+    amber: { text: "text-amber-800 dark:text-amber-100", bg: "bg-amber-100 dark:bg-amber-900/50", icon: "text-amber-600 dark:text-amber-400", btn: "bg-amber-600 hover:bg-amber-500 border-amber-600" }
   };
 
   const theme = colorMap[color];
 
   return (
     <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-end sm:items-center justify-center sm:p-4 z-50 animate-in fade-in duration-200">
-      <div className="bg-white dark:bg-slate-900 rounded-t-3xl sm:rounded-3xl max-w-lg w-full max-h-[90vh] flex flex-col shadow-2xl slide-in-from-bottom-8 sm:slide-in-from-bottom-0 sm:zoom-in-95 duration-300 border border-slate-100 dark:border-slate-800">
-        <div className="p-6 flex justify-between items-center border-b border-slate-100 dark:border-slate-800">
+      <div className="bg-white dark:bg-slate-900 rounded-t-3xl sm:rounded-3xl max-w-lg w-full max-h-[90vh] flex flex-col shadow-2xl slide-in-from-bottom-8 sm:slide-in-from-bottom-0 sm:zoom-in-95 duration-300 border-2 border-slate-200 dark:border-slate-700">
+        <div className="p-6 flex justify-between items-center border-b-2 border-slate-100 dark:border-slate-800">
           <h3 className={`text-2xl font-extrabold flex items-center gap-3 ${theme.text}`}>
-            <div className={`p-2.5 rounded-xl ${theme.bg} ${theme.icon}`}>
+            <div className={`p-2.5 rounded-xl border border-white/20 ${theme.bg} ${theme.icon}`}>
               {icon}
             </div>
             {title}
           </h3>
-          <button onClick={onClose} className="w-10 h-10 flex items-center justify-center bg-slate-100 dark:bg-slate-800 rounded-full text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 active:scale-90 transition-all font-bold text-xl">✕</button>
+          <div className="flex gap-2 items-center">
+            {extraAction}
+            <button onClick={onClose} className="w-10 h-10 flex items-center justify-center bg-slate-100 dark:bg-slate-800 rounded-full text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 active:scale-90 transition-all font-bold text-xl border-2 border-transparent hover:border-slate-300 dark:hover:border-slate-600">✕</button>
+          </div>
         </div>
         <div className="p-6 overflow-y-auto hide-scrollbar">
           {children}
         </div>
-        <div className="p-5 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 sm:rounded-b-3xl">
-          <button onClick={onClose} className={`w-full text-white font-extrabold text-lg py-4 rounded-2xl shadow-lg transition-all active:scale-[0.98] ${theme.btn}`}>Chiudi</button>
+        <div className="p-5 border-t-2 border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 sm:rounded-b-3xl">
+          <button onClick={onClose} className={`w-full text-white font-extrabold text-lg py-4 rounded-2xl shadow-lg transition-all active:scale-[0.98] border-2 ${theme.btn}`}>Chiudi</button>
         </div>
       </div>
     </div>
