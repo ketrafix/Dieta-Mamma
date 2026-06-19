@@ -3,7 +3,8 @@ import {
   Info, Coffee, Sun, Moon, 
   Apple, Droplet, CheckCircle2, ChevronDown, 
   AlertCircle, PieChart, Check, X,
-  ShoppingCart, Lock, Unlock, ListChecks, Trash2
+  ShoppingCart, Lock, Unlock, ListChecks, Trash2,
+  Wand2, Plus, Sparkles
 } from 'lucide-react';
 
 const opzioniColazioneLiq = [
@@ -27,7 +28,8 @@ const opzioniColazioneSol = [
 const opzioniPranzoCarbo = [
   "Pasta integrale 60 g", "Pasta di semola 50 g", "Riso 50 g", 
   "Farro 60 g", "Orzo 50 g", "Cous cous 50 g", "Farina di mais (per polenta) 50 g", 
-  "Pane comune 60 g", "Pane integrale o di segale 70 g", "Patate 220 g", "Gnocchi di patate 150 g"
+  "Pane comune 60 g", "Pane integrale o di segale 70 g", "Patate 220 g", "Gnocchi di patate 150 g",
+  "Nessun carboidrato aggiuntivo 0 g"
 ];
 
 const opzioniCenaPrimo = [
@@ -73,10 +75,18 @@ const initialPlan = {
   "Domenica": { colazioneLiq: opzioniColazioneLiq[0], colazioneSol: opzioniColazioneSol[0], pranzoCarbo: opzioniPranzoCarbo[10], pranzoPro: proteinRules.carne_bianca.items[0], cenaPrimo: opzioniCenaPrimo[0], cenaPro: proteinRules.affettato.items[0], cenaCarbo: opzioniCenaCarbo[0] }
 };
 
+function shuffleArray(array) {
+  let newArr = [...array];
+  for (let i = newArr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [newArr[i], newArr[j]] = [newArr[j], newArr[i]];
+  }
+  return newArr;
+}
+
 export default function App() {
   const [selectedDay, setSelectedDay] = useState(giorni[0]);
   
-  // STATI E SALVATAGGIO
   const [plan, setPlan] = useState(() => {
     const saved = localStorage.getItem('smartDietPlan');
     return saved ? JSON.parse(saved) : initialPlan;
@@ -92,6 +102,13 @@ export default function App() {
     return saved ? JSON.parse(saved) : {};
   });
 
+  // Nuovi stati per la lista spesa personalizzata
+  const [customItems, setCustomItems] = useState(() => {
+    const saved = localStorage.getItem('smartDietCustomItems');
+    return saved ? JSON.parse(saved) : [];
+  });
+  const [newCustomItemName, setNewCustomItemName] = useState("");
+
   const [isDarkMode, setIsDarkMode] = useState(() => {
     const saved = localStorage.getItem('smartDietTheme');
     return saved === 'dark';
@@ -100,8 +117,9 @@ export default function App() {
   const [showInfo, setShowInfo] = useState(false);
   const [showTracker, setShowTracker] = useState(false);
   const [showShoppingList, setShowShoppingList] = useState(false);
+  const [showGenerator, setShowGenerator] = useState(false);
+  const [showConfirmResetCart, setShowConfirmResetCart] = useState(false);
 
-  // Applica classe Dark Mode al documento HTML
   useEffect(() => {
     if (isDarkMode) {
       document.documentElement.classList.add('dark');
@@ -115,12 +133,75 @@ export default function App() {
   useEffect(() => localStorage.setItem('smartDietPlan', JSON.stringify(plan)), [plan]);
   useEffect(() => localStorage.setItem('smartDietCompleted', JSON.stringify(completedDays)), [completedDays]);
   useEffect(() => localStorage.setItem('smartDietCart', JSON.stringify(shoppingCart)), [shoppingCart]);
+  useEffect(() => localStorage.setItem('smartDietCustomItems', JSON.stringify(customItems)), [customItems]);
 
   const handleUpdate = (mealKey, value) => setPlan(prev => ({ ...prev, [selectedDay]: { ...prev[selectedDay], [mealKey]: value } }));
   const toggleCompleted = () => setCompletedDays(prev => ({ ...prev, [selectedDay]: !prev[selectedDay] }));
   const isCurrentDayLocked = completedDays[selectedDay];
 
-  // Bilancio: Conta SOLO i giorni confermati
+  const generaMenuCasuale = () => {
+    // 1. Creiamo un "mazzo" con tutti i gettoni proteici possibili secondo i limiti massimi
+    let poolProteine = [];
+    Object.keys(proteinRules).forEach(key => {
+      for(let i=0; i<proteinRules[key].max; i++) {
+        poolProteine.push(key);
+      }
+    });
+
+    // 2. Mischiamo il mazzo e peschiamo esattamente 14 gettoni (2 per ogni giorno)
+    poolProteine = shuffleArray(poolProteine).slice(0, 14);
+
+    let nuovoPiano = {};
+    
+    giorni.forEach((giorno, index) => {
+      // Estraiamo le categorie proteiche
+      let catPranzo = proteinRules[poolProteine[index * 2]];
+      let catCena = proteinRules[poolProteine[index * 2 + 1]];
+
+      // Scegliamo una variante a caso per quella categoria (es. se formaggio, sceglie a caso tra light o stagionato)
+      let pranzoPro = catPranzo.items[Math.floor(Math.random() * catPranzo.items.length)];
+      let cenaPro = catCena.items[Math.floor(Math.random() * catCena.items.length)];
+
+      let pranzoCarbo = opzioniPranzoCarbo[Math.floor(Math.random() * opzioniPranzoCarbo.length)];
+      let cenaCarbo = opzioniCenaCarbo[Math.floor(Math.random() * opzioniCenaCarbo.length)];
+      let cenaPrimo = opzioniCenaPrimo[Math.floor(Math.random() * opzioniCenaPrimo.length)];
+
+      // REGOLE SPECIALI: Se capita la pizza, azzeriamo i carboidrati extra
+      if (pranzoPro.includes("Pizza")) pranzoCarbo = "Nessun carboidrato aggiuntivo 0 g";
+      if (cenaPro.includes("Pizza")) {
+        cenaCarbo = "Nessun carboidrato aggiuntivo 0 g";
+        cenaPrimo = "Nessun primo 0 pz";
+      }
+
+      nuovoPiano[giorno] = {
+        colazioneLiq: opzioniColazioneLiq[Math.floor(Math.random() * opzioniColazioneLiq.length)],
+        colazioneSol: opzioniColazioneSol[Math.floor(Math.random() * opzioniColazioneSol.length)],
+        pranzoCarbo: pranzoCarbo,
+        pranzoPro: pranzoPro,
+        cenaPrimo: cenaPrimo,
+        cenaPro: cenaPro,
+        cenaCarbo: cenaCarbo
+      };
+    });
+
+    // Applichiamo il piano e azzeriamo le spunte
+    setPlan(nuovoPiano);
+    setCompletedDays({});
+    setShoppingCart({});
+    setShowGenerator(false);
+  };
+
+  const handleAddCustomItem = () => {
+    if(newCustomItemName.trim() !== "") {
+      setCustomItems(prev => [...prev, { id: Date.now().toString(), name: newCustomItemName.trim() }]);
+      setNewCustomItemName("");
+    }
+  };
+
+  const handleRemoveCustomItem = (id) => {
+    setCustomItems(prev => prev.filter(item => item.id !== id));
+  };
+
   const proteinStats = useMemo(() => {
     let stats = {};
     Object.keys(proteinRules).forEach(key => { stats[key] = { ...proteinRules[key], count: 0 }; });
@@ -138,11 +219,9 @@ export default function App() {
     return stats;
   }, [plan, completedDays]);
 
-  // Lista Spesa Intelligente (Somma i grammi!)
   const shoppingList = useMemo(() => {
     const list = {};
     
-    // Aggiunte fisse automatiche
     list["Verdura (Cotta o Cruda)"] = { qty: 14, unit: "porzioni" }; 
     list["Olio d'Oliva Extra Vergine"] = { qty: 175, unit: "g" }; 
     list["Frutta Fresca"] = { qty: 1750, unit: "g" }; 
@@ -207,23 +286,23 @@ export default function App() {
               {isDarkMode ? <Sun className="w-5 h-5 text-yellow-400" /> : <Moon className="w-5 h-5 text-slate-700" />}
             </button>
             <button 
+              onClick={() => setShowGenerator(true)}
+              className="p-3 bg-purple-100 dark:bg-purple-900/40 text-purple-600 dark:text-purple-400 active:scale-90 rounded-xl transition-all border-2 border-purple-200 dark:border-purple-800 shadow-sm flex items-center justify-center hover:bg-purple-200"
+            >
+              <Wand2 className="w-5 h-5" />
+            </button>
+            <button 
               onClick={() => setShowShoppingList(true)}
-              className="p-3 bg-white dark:bg-slate-800 text-emerald-600 dark:text-emerald-400 active:scale-90 rounded-xl transition-all border-2 border-emerald-200 dark:border-emerald-800 shadow-sm flex items-center justify-center hover:bg-emerald-50 dark:hover:bg-slate-700"
+              className="p-3 bg-white dark:bg-slate-800 text-emerald-600 dark:text-emerald-400 active:scale-90 rounded-xl transition-all border-2 border-emerald-200 dark:border-emerald-800 shadow-sm flex items-center justify-center hover:bg-emerald-50"
             >
               <ShoppingCart className="w-5 h-5" />
             </button>
             <button 
               onClick={() => setShowTracker(true)}
-              className="px-4 py-3 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 active:scale-95 rounded-xl transition-all flex items-center gap-2 font-bold text-sm border-2 border-emerald-200 dark:border-emerald-800 shadow-sm hover:bg-emerald-100 dark:hover:bg-emerald-900/50"
+              className="px-4 py-3 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 active:scale-95 rounded-xl transition-all flex items-center gap-2 font-bold text-sm border-2 border-emerald-200 dark:border-emerald-800 shadow-sm hover:bg-emerald-100"
             >
               <PieChart className="w-5 h-5" />
               <span className="hidden sm:inline">Bilancio</span>
-            </button>
-            <button 
-              onClick={() => setShowInfo(true)}
-              className="p-3 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 active:scale-90 rounded-xl transition-all border-2 border-slate-200 dark:border-slate-600 shadow-sm flex items-center justify-center hover:bg-slate-50 dark:hover:bg-slate-700"
-            >
-              <Info className="w-5 h-5" />
             </button>
           </div>
         </div>
@@ -253,6 +332,7 @@ export default function App() {
           ))}
         </div>
 
+        {}
         <div className={`transition-all duration-300 ${isCurrentDayLocked ? 'opacity-90' : ''}`}>
           
           {isCurrentDayLocked && (
@@ -292,7 +372,13 @@ export default function App() {
           </div>
         </div>
 
-        <div className="pt-4 pb-8">
+        <div className="pt-4 pb-8 flex gap-3">
+          <button
+            onClick={() => setShowInfo(true)}
+            className="flex-shrink-0 px-5 rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-2 border-slate-300 dark:border-slate-600 font-bold active:scale-95 transition-all"
+          >
+            <Info className="w-6 h-6" />
+          </button>
           <button
             onClick={toggleCompleted}
             className={`w-full py-5 rounded-2xl font-extrabold text-lg flex items-center justify-center gap-3 transition-all duration-300 active:scale-95 border-2 ${
@@ -329,6 +415,29 @@ export default function App() {
           </div>
         </div>
       </div>
+
+      {}
+
+      {/* MODAL GENERATORE CASUALE */}
+      {showGenerator && (
+        <Modal title="Generatore Magico" icon={<Sparkles className="w-6 h-6" />} onClose={() => setShowGenerator(false)} color="purple">
+          <div className="bg-purple-50 dark:bg-purple-900/20 border-2 border-purple-200 dark:border-purple-800/50 p-5 rounded-2xl mb-6 shadow-sm text-center">
+            <p className="text-[15px] leading-relaxed text-purple-900 dark:text-purple-100 font-medium">
+              Questa funzione mescolerà tutto il menù creando una <strong>settimana completamente nuova</strong>, calcolata per rispettare alla perfezione i limiti della tua dieta!
+            </p>
+            <p className="mt-4 text-sm text-purple-700 dark:text-purple-300 font-bold">
+              ⚠️ Attenzione: il piano attuale verrà sovrascritto e le spunte azzerate.
+            </p>
+          </div>
+          
+          <button 
+            onClick={generaMenuCasuale}
+            className="w-full bg-purple-600 hover:bg-purple-500 text-white font-extrabold text-lg py-5 rounded-2xl shadow-lg shadow-purple-500/30 transition-all active:scale-95 flex items-center justify-center gap-2 border-2 border-purple-700"
+          >
+            <Wand2 className="w-6 h-6" /> Crea Nuovo Menù
+          </button>
+        </Modal>
+      )}
 
       {/* MODAL BILANCIO */}
       {showTracker && (
@@ -370,23 +479,51 @@ export default function App() {
         </Modal>
       )}
 
-      {/* MODAL LISTA SPESA (Interattiva e con sconti) */}
+      {/* MODAL LISTA SPESA (Interattiva e Intelligente) */}
       {showShoppingList && (
         <Modal 
           title="Spesa della Settimana" 
           icon={<ListChecks className="w-6 h-6" />} 
-          onClose={() => setShowShoppingList(false)} 
+          onClose={() => {
+            setShowConfirmResetCart(false);
+            setShowShoppingList(false);
+          }} 
           color="blue"
           extraAction={
-            <button 
-              onClick={() => { if(window.confirm("Vuoi rimuovere tutte le spunte della spesa?")) setShoppingCart({}); }}
-              className="p-2 bg-red-100 text-red-600 rounded-xl hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400 transition-colors"
-              title="Resetta spunte"
-            >
-              <Trash2 className="w-5 h-5"/>
-            </button>
+            showConfirmResetCart ? (
+              <div className="flex items-center gap-2 mr-2">
+                <button onClick={() => { setShoppingCart({}); setShowConfirmResetCart(false); }} className="bg-red-500 hover:bg-red-600 text-white px-3 py-1.5 rounded-xl font-bold text-sm shadow-sm transition-colors">Svuota tutto</button>
+                <button onClick={() => setShowConfirmResetCart(false)} className="bg-slate-200 hover:bg-slate-300 text-slate-700 px-3 py-1.5 rounded-xl font-bold text-sm transition-colors dark:bg-slate-700 dark:text-slate-300">Annulla</button>
+              </div>
+            ) : (
+              <button 
+                onClick={() => setShowConfirmResetCart(true)}
+                className="p-2.5 bg-red-100 text-red-600 rounded-xl hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400 transition-colors border-2 border-transparent hover:border-red-300 dark:hover:border-red-800"
+                title="Resetta spunte"
+              >
+                <Trash2 className="w-5 h-5"/>
+              </button>
+            )
           }
         >
+          {/* Barra aggiunta personalizzata */}
+          <div className="flex gap-2 mb-6">
+            <input 
+              type="text" 
+              value={newCustomItemName}
+              onChange={(e) => setNewCustomItemName(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleAddCustomItem()}
+              placeholder="Cosa ti serve? (es. Detersivo)"
+              className="flex-1 bg-slate-50 dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-[15px] font-medium outline-none focus:border-blue-500 dark:focus:border-blue-500 transition-colors"
+            />
+            <button 
+              onClick={handleAddCustomItem}
+              className="bg-blue-600 hover:bg-blue-500 text-white p-3 rounded-xl shadow-sm active:scale-95 transition-all border-2 border-blue-700 flex items-center justify-center"
+            >
+              <Plus className="w-6 h-6" />
+            </button>
+          </div>
+
           {/* Promemoria Sconti */}
           <div className="bg-amber-100 dark:bg-amber-900/30 p-4 rounded-2xl border-2 border-amber-300 dark:border-amber-700 mb-5 shadow-sm">
             <h3 className="font-extrabold text-amber-900 dark:text-amber-400 mb-2 flex items-center gap-2">💡 Promemoria Sconti</h3>
@@ -397,6 +534,39 @@ export default function App() {
           </div>
 
           <div className="space-y-3">
+            {/* Lista Elementi Personalizzati Aggiunti */}
+            {customItems.length > 0 && (
+              <div className="mb-6 space-y-3">
+                <h4 className="font-extrabold text-slate-800 dark:text-slate-200 text-sm uppercase tracking-wide px-1">Extra Aggiunti da te:</h4>
+                {customItems.map((item) => {
+                  const isChecked = shoppingCart[item.id];
+                  return (
+                    <div key={item.id} className="flex gap-2">
+                      <button 
+                        onClick={() => setShoppingCart(prev => ({ ...prev, [item.id]: !prev[item.id] }))}
+                        className={`flex-1 flex justify-between items-center p-4 border-2 rounded-2xl transition-all active:scale-[0.98] ${
+                          isChecked 
+                            ? 'bg-slate-100 border-slate-200 text-slate-400 dark:bg-slate-800/50 dark:border-slate-700 dark:text-slate-500 line-through' 
+                            : 'bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-200 hover:border-blue-400 shadow-sm'
+                        }`}
+                      >
+                        <span className="text-[15px] font-bold pr-4 text-left">{item.name}</span>
+                        {isChecked && <Check className="w-5 h-5 flex-shrink-0" />}
+                      </button>
+                      <button 
+                        onClick={() => handleRemoveCustomItem(item.id)}
+                        className="p-4 bg-red-50 text-red-500 border-2 border-red-200 rounded-2xl hover:bg-red-100 dark:bg-red-900/20 dark:border-red-800 dark:text-red-400 transition-colors"
+                      >
+                        <X className="w-5 h-5" />
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            <h4 className="font-extrabold text-slate-800 dark:text-slate-200 text-sm uppercase tracking-wide px-1 mt-4">Dieta della Settimana:</h4>
+            {/* Lista Elementi Calcolati Dalla Dieta */}
             {shoppingList.map((item, idx) => {
               const isChecked = shoppingCart[item.name];
               return (
@@ -409,7 +579,9 @@ export default function App() {
                       : 'bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-200 hover:border-blue-400 dark:hover:border-blue-500 shadow-sm'
                   }`}
                 >
-                  <span className="text-[15px] font-bold pr-4 text-left">{item.name}</span>
+                  <span className="text-[15px] font-bold pr-4 text-left flex items-center gap-2">
+                    {item.name}
+                  </span>
                   <span className={`flex-shrink-0 font-black text-sm px-3 py-1.5 rounded-lg whitespace-nowrap ${
                     isChecked 
                       ? 'bg-slate-200 text-slate-400 dark:bg-slate-700 dark:text-slate-500' 
@@ -529,7 +701,8 @@ function Modal({ title, icon, children, onClose, color = "emerald", extraAction 
   const colorMap = {
     emerald: { text: "text-emerald-800 dark:text-emerald-100", bg: "bg-emerald-100 dark:bg-emerald-900/50", icon: "text-emerald-600 dark:text-emerald-400", btn: "bg-emerald-600 hover:bg-emerald-500 border-emerald-600" },
     blue: { text: "text-blue-800 dark:text-blue-100", bg: "bg-blue-100 dark:bg-blue-900/50", icon: "text-blue-600 dark:text-blue-400", btn: "bg-blue-600 hover:bg-blue-500 border-blue-600" },
-    amber: { text: "text-amber-800 dark:text-amber-100", bg: "bg-amber-100 dark:bg-amber-900/50", icon: "text-amber-600 dark:text-amber-400", btn: "bg-amber-600 hover:bg-amber-500 border-amber-600" }
+    amber: { text: "text-amber-800 dark:text-amber-100", bg: "bg-amber-100 dark:bg-amber-900/50", icon: "text-amber-600 dark:text-amber-400", btn: "bg-amber-600 hover:bg-amber-500 border-amber-600" },
+    purple: { text: "text-purple-800 dark:text-purple-100", bg: "bg-purple-100 dark:bg-purple-900/50", icon: "text-purple-600 dark:text-purple-400", btn: "bg-purple-600 hover:bg-purple-500 border-purple-600" }
   };
 
   const theme = colorMap[color];
@@ -546,7 +719,7 @@ function Modal({ title, icon, children, onClose, color = "emerald", extraAction 
           </h3>
           <div className="flex gap-2 items-center">
             {extraAction}
-            <button onClick={onClose} className="w-10 h-10 flex items-center justify-center bg-slate-100 dark:bg-slate-800 rounded-full text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 active:scale-90 transition-all font-bold text-xl border-2 border-transparent hover:border-slate-300 dark:hover:border-slate-600">✕</button>
+            {!extraAction && <button onClick={onClose} className="w-10 h-10 flex items-center justify-center bg-slate-100 dark:bg-slate-800 rounded-full text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 active:scale-90 transition-all font-bold text-xl border-2 border-transparent hover:border-slate-300 dark:hover:border-slate-600">✕</button>}
           </div>
         </div>
         <div className="p-6 overflow-y-auto hide-scrollbar">
