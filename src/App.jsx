@@ -51,13 +51,8 @@ const proteinRules = {
   "pesce_grasso": { name: "Pesce Grasso", max: 1, items: ["Pesce grasso (salmone, sgombro, tonno) 150 g - (Max 1v/sett)"] },
   "uova": { name: "Uova", max: 1, items: ["Uova (n.2) 100 g - (Max 1v/sett)"] },
   "affettato": { name: "Affettato Magro", max: 2, items: ["Affettato magro (crudo, cotto, bresaola) 70 g - (Max 2v/sett)"] },
-  "formaggio": { name: "Formaggi (Light/Stagionato)", max: 2, items: [
-      "Formaggio light (ricotta, feta, mozz.) 150 g - (Max 2v/sett)",
-      "Formaggio stagionato (grana, asiago) 70 g - (Max 2v/sett)"
-    ] 
-  },
-  "legumi": { name: "Legumi", max: 2, items: ["Legumi freschi/scatola 150 g o secchi 50 g - (Max 1-2v/sett)"] },
-  "soia": { name: "Soia (Burger/Polpette)", max: 1, items: ["Hamburgher/polpette di soia 100 g - (Max 0-1v/sett)"] },
+  "formaggio": { name: "Formaggio", max: 1, items: ["Formaggio light (ricotta, feta, mozz.) 150 g - (Max 1v/sett)", "Formaggio stagionato (grana, asiago) 70 g - (Max 1v/sett)"] },
+  "legumi": { name: "Legumi", max: 2, items: ["Legumi freschi/scatola 150 g o secchi 50 g - (Max 2v/sett)"] },
   "pizza": { name: "Pizza (Pasto Libero)", max: 1, items: ["Pizza (Pasto Libero) 1 pz"] }
 };
 
@@ -69,15 +64,14 @@ const initialPlan = {
   "Martedì": { colazioneLiq: opzioniColazioneLiq[0], colazioneSol: opzioniColazioneSol[0], pranzoCarbo: opzioniPranzoCarbo[2], pranzoPro: proteinRules.affettato.items[0], cenaPrimo: opzioniCenaPrimo[0], cenaPro: proteinRules.carne_bianca.items[0], cenaCarbo: opzioniCenaCarbo[0] },
   "Mercoledì": { colazioneLiq: opzioniColazioneLiq[0], colazioneSol: opzioniColazioneSol[0], pranzoCarbo: opzioniPranzoCarbo[6], pranzoPro: proteinRules.formaggio.items[0], cenaPrimo: opzioniCenaPrimo[0], cenaPro: proteinRules.uova.items[0], cenaCarbo: opzioniCenaCarbo[0] },
   "Giovedì": { colazioneLiq: opzioniColazioneLiq[0], colazioneSol: opzioniColazioneSol[0], pranzoCarbo: opzioniPranzoCarbo[3], pranzoPro: proteinRules.carne_bianca.items[0], cenaPrimo: opzioniCenaPrimo[0], cenaPro: proteinRules.pesce_magro.items[0], cenaCarbo: opzioniCenaCarbo[7] },
-  "Venerdì": { colazioneLiq: opzioniColazioneLiq[0], colazioneSol: opzioniColazioneSol[0], pranzoCarbo: opzioniPranzoCarbo[0], pranzoPro: proteinRules.pesce_magro.items[0], cenaPrimo: opzioniCenaPrimo[0], cenaPro: proteinRules.carne_rossa.items[0], cenaCarbo: opzioniCenaCarbo[0] },
-  "Sabato": { colazioneLiq: opzioniColazioneLiq[0], colazioneSol: opzioniColazioneSol[0], pranzoCarbo: opzioniPranzoCarbo[5], pranzoPro: proteinRules.legumi.items[0], cenaPrimo: opzioniCenaPrimo[2], cenaPro: proteinRules.pizza.items[0], cenaCarbo: opzioniCenaCarbo[12] },
+  "Venerdì": { colazioneLiq: opzioniColazioneLiq[0], colazioneSol: opzioniColazioneSol[0], pranzoCarbo: opzioniPranzoCarbo[0], pranzoPro: proteinRules.pesce_grasso.items[0], cenaPrimo: opzioniCenaPrimo[2], cenaPro: proteinRules.pizza.items[0], cenaCarbo: opzioniCenaCarbo[12] },
+  "Sabato": { colazioneLiq: opzioniColazioneLiq[0], colazioneSol: opzioniColazioneSol[0], pranzoCarbo: opzioniPranzoCarbo[5], pranzoPro: proteinRules.legumi.items[0], cenaPrimo: opzioniCenaPrimo[0], cenaPro: proteinRules.carne_rossa.items[0], cenaCarbo: opzioniCenaCarbo[0] },
   "Domenica": { colazioneLiq: opzioniColazioneLiq[0], colazioneSol: opzioniColazioneSol[0], pranzoCarbo: opzioniPranzoCarbo[10], pranzoPro: proteinRules.carne_bianca.items[0], cenaPrimo: opzioniCenaPrimo[0], cenaPro: proteinRules.affettato.items[0], cenaCarbo: opzioniCenaCarbo[0] }
 };
 
 export default function App() {
   const [selectedDay, setSelectedDay] = useState(giorni[0]);
   
-  // STATI E SALVATAGGIO
   const [plan, setPlan] = useState(() => {
     const saved = localStorage.getItem('smartDietPlan');
     return saved ? JSON.parse(saved) : initialPlan;
@@ -108,29 +102,11 @@ export default function App() {
   const [showShoppingList, setShowShoppingList] = useState(false);
   const [newCustomItem, setNewCustomItem] = useState("");
 
-  // Refs per lo scorrimento
   const scrollRef = useRef(null);
   const isDown = useRef(false);
   const startX = useRef(0);
   const scrollLeft = useRef(0);
 
-  // Effetti salvataggio locale
-  useEffect(() => {
-    if (isDarkMode) {
-      document.documentElement.classList.add('dark');
-      localStorage.setItem('smartDietTheme', 'dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-      localStorage.setItem('smartDietTheme', 'light');
-    }
-  }, [isDarkMode]);
-
-  useEffect(() => localStorage.setItem('smartDietPlan', JSON.stringify(plan)), [plan]);
-  useEffect(() => localStorage.setItem('smartDietCompleted', JSON.stringify(completedDays)), [completedDays]);
-  useEffect(() => localStorage.setItem('smartDietCart', JSON.stringify(shoppingCart)), [shoppingCart]);
-  useEffect(() => localStorage.setItem('smartDietCustomItems', JSON.stringify(customShoppingItems)), [customShoppingItems]);
-
-  // Gestione trascinamento
   const handleMouseDown = (e) => {
     isDown.current = true;
     startX.current = e.pageX - scrollRef.current.offsetLeft;
@@ -146,44 +122,68 @@ export default function App() {
     scrollRef.current.scrollLeft = scrollLeft.current - walk;
   };
 
+  useEffect(() => {
+    if (isDarkMode) {
+      document.documentElement.classList.add('dark');
+      localStorage.setItem('smartDietTheme', 'dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('smartDietTheme', 'light');
+    }
+  }, [isDarkMode]);
+
+  useEffect(() => localStorage.setItem('smartDietPlan', JSON.stringify(plan)), [plan]);
+  useEffect(() => localStorage.setItem('smartDietCompleted', JSON.stringify(completedDays)), [completedDays]);
+  useEffect(() => localStorage.setItem('smartDietCart', JSON.stringify(shoppingCart)), [shoppingCart]);
+  useEffect(() => localStorage.setItem('smartDietCustomItems', JSON.stringify(customShoppingItems)), [customShoppingItems]);
+
   const handleUpdate = (mealKey, value) => setPlan(prev => ({ ...prev, [selectedDay]: { ...prev[selectedDay], [mealKey]: value } }));
   const toggleCompleted = () => setCompletedDays(prev => ({ ...prev, [selectedDay]: !prev[selectedDay] }));
   const isCurrentDayLocked = completedDays[selectedDay];
 
-  // Generatore Casuale
   const generateRandomPlan = () => {
-    if(!window.confirm("Vuoi creare un menù settimanale completamente nuovo e casuale? Le regole verranno rispettate!")) return;
+    if(!window.confirm("🪄 Vuoi creare un menù settimanale perfetto e casuale? Metterò la pizza il Venerdì e distribuirà le altre proteine senza sgarrare nulla!")) return;
     
-    // Crea un "mazzo" con tutte le proteine disponibili rispettando i massimi
-    let proteinPool = [];
-    Object.values(proteinRules).forEach(rule => {
-      for (let i = 0; i < rule.max; i++) {
-        proteinPool.push(rule.items[Math.floor(Math.random() * rule.items.length)]);
-      }
-    });
+    // Pool esatto di 13 pasti (esclusa la pizza che è fissa)
+    let exactPool = [
+      ...Array(3).fill(proteinRules.carne_bianca.items[0]),
+      ...Array(1).fill(proteinRules.carne_rossa.items[0]),
+      ...Array(2).fill(proteinRules.pesce_magro.items[0]),
+      ...Array(1).fill(proteinRules.pesce_grasso.items[0]),
+      ...Array(1).fill(proteinRules.uova.items[0]),
+      ...Array(2).fill(proteinRules.affettato.items[0]),
+      ...Array(1).fill(proteinRules.formaggio.items[0]),
+      ...Array(2).fill(proteinRules.legumi.items[0])
+    ];
     
-    // Mescola il mazzo
-    proteinPool.sort(() => Math.random() - 0.5);
+    // Mescola le proteine in modo casuale
+    exactPool.sort(() => Math.random() - 0.5);
 
-    // Crea il nuovo piano
     let newPlan = {};
-    giorni.forEach((giorno, index) => {
+    
+    giorni.forEach((giorno) => {
+      const isFriday = giorno === "Venerdì";
+      
+      // Assegna le proteine (Se è venerdì cena, fissa la pizza, altrimenti pesca dal mazzo)
+      let pranzoPro = exactPool.pop();
+      let cenaPro = isFriday ? proteinRules.pizza.items[0] : exactPool.pop();
+
       newPlan[giorno] = {
         colazioneLiq: opzioniColazioneLiq[Math.floor(Math.random() * opzioniColazioneLiq.length)],
         colazioneSol: opzioniColazioneSol[Math.floor(Math.random() * opzioniColazioneSol.length)],
         pranzoCarbo: opzioniPranzoCarbo[Math.floor(Math.random() * opzioniPranzoCarbo.length)],
-        pranzoPro: proteinPool[index * 2] || opzioniProteine[0], // Prende 2 dal mazzo per ogni giorno
+        pranzoPro: pranzoPro,
         cenaPrimo: opzioniCenaPrimo[Math.floor(Math.random() * opzioniCenaPrimo.length)],
-        cenaPro: proteinPool[index * 2 + 1] || opzioniProteine[0],
-        cenaCarbo: opzioniCenaCarbo[Math.floor(Math.random() * opzioniCenaCarbo.length)],
+        cenaPro: cenaPro,
+        // Se c'è la pizza venerdì sera, forza nessun carboidrato extra
+        cenaCarbo: isFriday ? opzioniCenaCarbo[12] : opzioniCenaCarbo[Math.floor(Math.random() * 12)],
       };
     });
 
     setPlan(newPlan);
-    setCompletedDays({}); // Resetta le conferme
+    setCompletedDays({}); // Sblocca tutte le giornate
   };
 
-  // Funzioni Spesa
   const addCustomItem = (e) => {
     e.preventDefault();
     if(newCustomItem.trim() === "") return;
@@ -195,7 +195,6 @@ export default function App() {
     setCustomShoppingItems(prev => prev.filter((_, i) => i !== indexToRemove));
   };
 
-  // Bilancio
   const proteinStats = useMemo(() => {
     let stats = {};
     Object.keys(proteinRules).forEach(key => { stats[key] = { ...proteinRules[key], count: 0 }; });
@@ -213,7 +212,6 @@ export default function App() {
     return stats;
   }, [plan, completedDays]);
 
-  // Lista Spesa
   const shoppingList = useMemo(() => {
     const list = {};
     list["Verdura (Cotta o Cruda)"] = { qty: 14, unit: "porzioni", category: 'base' }; 
@@ -254,7 +252,6 @@ export default function App() {
   const sendWhatsApp = () => {
     let text = "🛒 *Lista della Spesa Settimanale*\n\n";
     
-    // Alimenti base calcolati
     text += "🍽️ *Alimenti:*\n";
     shoppingList.forEach(item => {
       if(!shoppingCart[item.name]) {
@@ -262,7 +259,6 @@ export default function App() {
       }
     });
 
-    // Elementi Extra
     if(customShoppingItems.length > 0) {
       const unpickedExtra = customShoppingItems.filter(item => !shoppingCart[item]);
       if(unpickedExtra.length > 0) {
@@ -300,7 +296,7 @@ export default function App() {
             <button 
               onClick={generateRandomPlan}
               className="p-3 bg-fuchsia-100 dark:bg-fuchsia-900/40 text-fuchsia-700 dark:text-fuchsia-400 active:scale-90 rounded-xl transition-all border-2 border-fuchsia-200 dark:border-fuchsia-800 shadow-sm flex items-center justify-center hover:bg-fuchsia-200 dark:hover:bg-fuchsia-800"
-              title="Genera Menù Casuale"
+              title="Genera Menù Casuale Perfetto"
             >
               <Wand2 className="w-5 h-5" />
             </button>
@@ -322,7 +318,7 @@ export default function App() {
 
       <main className="max-w-3xl mx-auto p-4 space-y-8 mt-2">
         
-        {/* DAY SELECTOR - DRAG TO SCROLL (Trascina col mouse o dito) */}
+        {}
         <div 
           ref={scrollRef}
           onMouseDown={handleMouseDown}
@@ -351,7 +347,7 @@ export default function App() {
           ))}
         </div>
 
-        {/* CONTENUTO GIORNATA */}
+        {}
         <div className={`transition-all duration-300 ${isCurrentDayLocked ? 'opacity-90' : ''}`}>
           
           {isCurrentDayLocked && (
@@ -391,6 +387,7 @@ export default function App() {
           </div>
         </div>
 
+        {}
         <div className="pt-4 pb-8">
           <button
             onClick={toggleCompleted}
@@ -410,7 +407,7 @@ export default function App() {
 
       </main>
 
-      {/* FOOTER CONDIMENTI */}
+      {}
       <div className="fixed bottom-0 w-full flex justify-between px-4 sm:hidden pb-4 pointer-events-none z-30">
           <button onClick={() => setIsDarkMode(!isDarkMode)} className="p-3 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-200 rounded-full shadow-lg border border-slate-200 dark:border-slate-700 pointer-events-auto">
               {isDarkMode ? <Sun className="w-6 h-6 text-yellow-400" /> : <Moon className="w-6 h-6 text-slate-700" />}
@@ -420,7 +417,7 @@ export default function App() {
           </button>
       </div>
 
-      {/* MODAL BILANCIO */}
+      {}
       {showTracker && (
         <Modal title="Bilancio Settimanale" icon={<PieChart className="w-6 h-6" />} onClose={() => setShowTracker(false)}>
           <div className="bg-emerald-50 dark:bg-emerald-900/20 border-2 border-emerald-200 dark:border-emerald-800/50 p-4 rounded-2xl mb-6 shadow-sm">
@@ -460,7 +457,7 @@ export default function App() {
         </Modal>
       )}
 
-      {/* MODAL LISTA SPESA (Interattiva, Aggiunte e WhatsApp) */}
+      {}
       {showShoppingList && (
         <Modal 
           title="Spesa della Settimana" 
@@ -478,7 +475,7 @@ export default function App() {
             </div>
           }
         >
-          {/* Aggiungi cose alla spesa */}
+          {/* Form per aggiungere cose extra alla spesa */}
           <form onSubmit={addCustomItem} className="flex gap-2 mb-6">
             <input 
               type="text" 
@@ -541,6 +538,38 @@ export default function App() {
         </Modal>
       )}
 
+      {}
+      {showInfo && (
+        <Modal title="Regole della Dieta" icon={<AlertCircle className="w-6 h-6" />} onClose={() => setShowInfo(false)} color="amber">
+          <div className="space-y-6 text-sm text-slate-600 dark:text-slate-300">
+            <section>
+              <h4 className="font-bold text-slate-800 dark:text-slate-100 mb-3 text-base flex items-center gap-2">
+                <span className="w-6 h-6 rounded-full bg-amber-100 dark:bg-amber-900/50 text-amber-600 dark:text-amber-400 flex items-center justify-center text-xs">1</span>
+                Regole Generali
+              </h4>
+              <ul className="space-y-3 bg-amber-50 dark:bg-amber-900/10 p-4 rounded-2xl border-2 border-amber-200 dark:border-amber-800/50">
+                <li className="flex gap-2"><CheckCircle2 className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5"/> <span><strong>I pesi indicati sono a crudo</strong> e al netto degli scarti.</span></li>
+                <li className="flex gap-2"><CheckCircle2 className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5"/> <span>Non aggiungere zuccheri nelle bevande.</span></li>
+                <li className="flex gap-2"><CheckCircle2 className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5"/> <span>Bevi almeno <strong>1.5L di acqua</strong> al giorno.</span></li>
+              </ul>
+            </section>
+
+            <section>
+              <h4 className="font-bold text-slate-800 dark:text-slate-100 mb-2 text-base">Conversione Pesi (Crudo → Cotto)</h4>
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                <div className="bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 p-3 rounded-xl flex justify-between shadow-sm"><strong>Pasta</strong> <span>x 2</span></div>
+                <div className="bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 p-3 rounded-xl flex justify-between shadow-sm"><strong>Riso</strong> <span>x 2.5</span></div>
+                <div className="bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 p-3 rounded-xl flex justify-between shadow-sm"><strong>Gnocchi</strong> <span>x 1.1</span></div>
+                <div className="bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 p-3 rounded-xl flex justify-between shadow-sm"><strong>Patate</strong> <span>x 1</span></div>
+                <div className="bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 p-3 rounded-xl flex justify-between shadow-sm"><strong>Carne/Pesce</strong> <span>x 0.8</span></div>
+                <div className="bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 p-3 rounded-xl flex justify-between shadow-sm"><strong>Legumi Secchi</strong> <span>x 2.5</span></div>
+              </div>
+            </section>
+          </div>
+        </Modal>
+      )}
+
+      {}
       <style dangerouslySetInnerHTML={{__html: `
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
