@@ -4,7 +4,7 @@ import {
   Apple, Droplet, CheckCircle2, ChevronDown, 
   AlertCircle, PieChart, Check, X,
   ShoppingCart, Lock, Unlock, ListChecks, Trash2,
-  Wand2, Plus, Sparkles
+  Wand2, Plus, Sparkles, Share2
 } from 'lucide-react';
 
 const opzioniColazioneLiq = [
@@ -258,6 +258,30 @@ export default function App() {
     return Object.entries(list).map(([name, data]) => ({ name, ...data })).sort((a, b) => a.name.localeCompare(b.name));
   }, [plan]);
 
+  const shareOnWhatsApp = () => {
+    let message = "🛒 *Lista della Spesa Settimanale*\n\n";
+    
+    if (customItems.length > 0) {
+      message += "📝 *Extra:*\n";
+      customItems.forEach(item => {
+        if (!shoppingCart[item.id]) { // Manda solo quelli NON spuntati
+          message += `- ${item.name}\n`;
+        }
+      });
+      message += "\n";
+    }
+
+    message += "🍏 *Dalla Dieta:*\n";
+    shoppingList.forEach(item => {
+      if (!shoppingCart[item.name]) { // Manda solo quelli NON spuntati
+        message += `- ${item.name}: ${item.qty} ${item.unit}\n`;
+      }
+    });
+
+    const encodedMessage = encodeURIComponent(message);
+    window.open(`https://wa.me/?text=${encodedMessage}`, '_blank');
+  };
+
   const daysCompletedCount = Object.values(completedDays).filter(Boolean).length;
   const dayData = plan[selectedDay];
 
@@ -311,12 +335,12 @@ export default function App() {
       <main className="max-w-3xl mx-auto p-4 space-y-8 mt-2">
         
         {/* DAY SELECTOR CON EFFETTO PRESSIONE RISOLTO */}
-        <div className="flex overflow-x-auto gap-3 hide-scrollbar pb-2 px-1">
+        <div className="flex overflow-x-auto gap-3 hide-scrollbar pb-4 px-1 snap-x">
           {giorni.map(g => (
             <button
               key={g}
               onClick={() => setSelectedDay(g)}
-              className={`flex-shrink-0 px-6 py-3 rounded-2xl text-base font-bold transition-all duration-200 active:scale-95 border-2 ${
+              className={`snap-start flex-shrink-0 px-6 py-3 rounded-2xl text-base font-bold transition-all duration-200 active:scale-95 border-2 ${
                 selectedDay === g 
                   ? 'bg-emerald-600 dark:bg-emerald-500 text-white border-emerald-600 shadow-lg shadow-emerald-500/30' 
                   : completedDays[g] 
@@ -496,13 +520,22 @@ export default function App() {
                 <button onClick={() => setShowConfirmResetCart(false)} className="bg-slate-200 hover:bg-slate-300 text-slate-700 px-3 py-1.5 rounded-xl font-bold text-sm transition-colors dark:bg-slate-700 dark:text-slate-300">Annulla</button>
               </div>
             ) : (
-              <button 
-                onClick={() => setShowConfirmResetCart(true)}
-                className="p-2.5 bg-red-100 text-red-600 rounded-xl hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400 transition-colors border-2 border-transparent hover:border-red-300 dark:hover:border-red-800"
-                title="Resetta spunte"
-              >
-                <Trash2 className="w-5 h-5"/>
-              </button>
+              <div className="flex gap-2">
+                <button 
+                  onClick={shareOnWhatsApp}
+                  className="p-2.5 bg-green-100 text-green-600 rounded-xl hover:bg-green-200 dark:bg-green-900/30 dark:text-green-400 transition-colors border-2 border-transparent hover:border-green-300 dark:hover:border-green-800"
+                  title="Invia su WhatsApp"
+                >
+                  <Share2 className="w-5 h-5"/>
+                </button>
+                <button 
+                  onClick={() => setShowConfirmResetCart(true)}
+                  className="p-2.5 bg-red-100 text-red-600 rounded-xl hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400 transition-colors border-2 border-transparent hover:border-red-300 dark:hover:border-red-800"
+                  title="Resetta spunte"
+                >
+                  <Trash2 className="w-5 h-5"/>
+                </button>
+              </div>
             )
           }
         >
