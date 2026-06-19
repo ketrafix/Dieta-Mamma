@@ -142,7 +142,7 @@ export default function App() {
   const isCurrentDayLocked = completedDays[selectedDay];
 
   const generateRandomPlan = () => {
-    if(!window.confirm("🪄 Vuoi creare un menù settimanale perfetto e casuale? Metterò la pizza il Venerdì e distribuirà le altre proteine senza sgarrare nulla!")) return;
+    if(!window.confirm("🪄 Vuoi creare un menù settimanale perfetto? Distribuirò le proteine rispettando tutti i limiti e metterò la Pizza il Venerdì!")) return;
     
     // Pool esatto di 13 pasti (esclusa la pizza che è fissa)
     let exactPool = [
@@ -156,7 +156,6 @@ export default function App() {
       ...Array(2).fill(proteinRules.legumi.items[0])
     ];
     
-    // Mescola le proteine in modo casuale
     exactPool.sort(() => Math.random() - 0.5);
 
     let newPlan = {};
@@ -164,7 +163,6 @@ export default function App() {
     giorni.forEach((giorno) => {
       const isFriday = giorno === "Venerdì";
       
-      // Assegna le proteine (Se è venerdì cena, fissa la pizza, altrimenti pesca dal mazzo)
       let pranzoPro = exactPool.pop();
       let cenaPro = isFriday ? proteinRules.pizza.items[0] : exactPool.pop();
 
@@ -175,7 +173,7 @@ export default function App() {
         pranzoPro: pranzoPro,
         cenaPrimo: opzioniCenaPrimo[Math.floor(Math.random() * opzioniCenaPrimo.length)],
         cenaPro: cenaPro,
-        // Se c'è la pizza venerdì sera, forza nessun carboidrato extra
+        // Nessun carboidrato extra venerdì sera
         cenaCarbo: isFriday ? opzioniCenaCarbo[12] : opzioniCenaCarbo[Math.floor(Math.random() * 12)],
       };
     });
@@ -280,37 +278,38 @@ export default function App() {
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-200 font-sans pb-32 transition-colors duration-300">
       
+      {/* HEADER OTTIMIZZATO PER TELEFONO (I PULSANTI SONO PIU' PICCOLI SU MOBILE) */}
       <header className="bg-white dark:bg-slate-800 sticky top-0 z-20 border-b-2 border-slate-200 dark:border-slate-700 shadow-sm transition-colors duration-300">
-        <div className="max-w-3xl mx-auto flex justify-between items-center p-4">
-          <div className="flex items-center gap-3">
-            <div className="bg-emerald-500 dark:bg-emerald-600 p-2.5 rounded-2xl shadow-lg shadow-emerald-500/30">
-              <Apple className="w-6 h-6 text-white" />
+        <div className="max-w-3xl mx-auto flex justify-between items-center p-3 sm:p-4">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <div className="bg-emerald-500 dark:bg-emerald-600 p-2 sm:p-2.5 rounded-xl sm:rounded-2xl shadow-lg shadow-emerald-500/30">
+              <Apple className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
             </div>
             <div>
-              <h1 className="text-2xl font-extrabold text-slate-800 dark:text-white tracking-tight">Smart Diet</h1>
-              <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Il menù perfetto</p>
+              <h1 className="text-xl sm:text-2xl font-extrabold text-slate-800 dark:text-white tracking-tight">Smart Diet</h1>
+              <p className="text-[11px] sm:text-sm font-medium text-slate-500 dark:text-slate-400">Il menù perfetto</p>
             </div>
           </div>
           
-          <div className="flex gap-2">
+          <div className="flex gap-1.5 sm:gap-2">
             <button 
               onClick={generateRandomPlan}
-              className="p-3 bg-fuchsia-100 dark:bg-fuchsia-900/40 text-fuchsia-700 dark:text-fuchsia-400 active:scale-90 rounded-xl transition-all border-2 border-fuchsia-200 dark:border-fuchsia-800 shadow-sm flex items-center justify-center hover:bg-fuchsia-200 dark:hover:bg-fuchsia-800"
+              className="p-2 sm:p-3 bg-fuchsia-100 dark:bg-fuchsia-900/40 text-fuchsia-700 dark:text-fuchsia-400 active:scale-90 rounded-xl transition-all border-2 border-fuchsia-200 dark:border-fuchsia-800 shadow-sm flex items-center justify-center hover:bg-fuchsia-200 dark:hover:bg-fuchsia-800"
               title="Genera Menù Casuale Perfetto"
             >
-              <Wand2 className="w-5 h-5" />
+              <Wand2 className="w-4 h-4 sm:w-5 sm:h-5" />
             </button>
-            <button onClick={() => setIsDarkMode(!isDarkMode)} className="hidden sm:flex p-3 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-200 rounded-xl active:scale-90 transition-all shadow-sm items-center justify-center border-2 border-transparent">
-              {isDarkMode ? <Sun className="w-5 h-5 text-yellow-400" /> : <Moon className="w-5 h-5 text-slate-700" />}
+            <button onClick={() => setIsDarkMode(!isDarkMode)} className="hidden sm:flex p-2 sm:p-3 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-200 rounded-xl active:scale-90 transition-all shadow-sm items-center justify-center border-2 border-transparent">
+              {isDarkMode ? <Sun className="w-4 h-4 sm:w-5 sm:h-5 text-yellow-400" /> : <Moon className="w-4 h-4 sm:w-5 sm:h-5 text-slate-700" />}
             </button>
-            <button onClick={() => setShowShoppingList(true)} className="p-3 bg-white dark:bg-slate-800 text-emerald-600 dark:text-emerald-400 active:scale-90 rounded-xl transition-all border-2 border-emerald-200 dark:border-emerald-800 shadow-sm flex items-center justify-center hover:bg-emerald-50 dark:hover:bg-slate-700">
-              <ShoppingCart className="w-5 h-5" />
+            <button onClick={() => setShowShoppingList(true)} className="p-2 sm:p-3 bg-white dark:bg-slate-800 text-emerald-600 dark:text-emerald-400 active:scale-90 rounded-xl transition-all border-2 border-emerald-200 dark:border-emerald-800 shadow-sm flex items-center justify-center hover:bg-emerald-50 dark:hover:bg-slate-700">
+              <ShoppingCart className="w-4 h-4 sm:w-5 sm:h-5" />
             </button>
-            <button onClick={() => setShowTracker(true)} className="hidden sm:flex px-4 py-3 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 active:scale-95 rounded-xl transition-all items-center gap-2 font-bold text-sm border-2 border-emerald-200 dark:border-emerald-800 shadow-sm hover:bg-emerald-100 dark:hover:bg-emerald-900/50">
-              <PieChart className="w-5 h-5" /> Bilancio
+            <button onClick={() => setShowTracker(true)} className="hidden sm:flex px-3 sm:px-4 py-2 sm:py-3 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 active:scale-95 rounded-xl transition-all items-center gap-2 font-bold text-sm border-2 border-emerald-200 dark:border-emerald-800 shadow-sm hover:bg-emerald-100 dark:hover:bg-emerald-900/50">
+              <PieChart className="w-4 h-4 sm:w-5 sm:h-5" /> <span className="hidden md:inline">Bilancio</span>
             </button>
-            <button onClick={() => setShowInfo(true)} className="p-3 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 active:scale-90 rounded-xl transition-all border-2 border-slate-200 dark:border-slate-600 shadow-sm flex items-center justify-center hover:bg-slate-50 dark:hover:bg-slate-700">
-              <Info className="w-5 h-5" />
+            <button onClick={() => setShowInfo(true)} className="p-2 sm:p-3 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 active:scale-90 rounded-xl transition-all border-2 border-slate-200 dark:border-slate-600 shadow-sm flex items-center justify-center hover:bg-slate-50 dark:hover:bg-slate-700">
+              <Info className="w-4 h-4 sm:w-5 sm:h-5" />
             </button>
           </div>
         </div>
@@ -318,7 +317,7 @@ export default function App() {
 
       <main className="max-w-3xl mx-auto p-4 space-y-8 mt-2">
         
-        {}
+        {/* BARRA DEI GIORNI */}
         <div 
           ref={scrollRef}
           onMouseDown={handleMouseDown}
@@ -347,9 +346,8 @@ export default function App() {
           ))}
         </div>
 
-        {}
+        {/* SCHEDA PASTI */}
         <div className={`transition-all duration-300 ${isCurrentDayLocked ? 'opacity-90' : ''}`}>
-          
           {isCurrentDayLocked && (
             <div className="bg-emerald-100/80 dark:bg-emerald-900/50 border-2 border-emerald-300 dark:border-emerald-800 text-emerald-900 dark:text-emerald-100 px-4 py-3 rounded-2xl mb-6 flex items-center gap-3 shadow-inner">
               <Lock className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
@@ -387,7 +385,7 @@ export default function App() {
           </div>
         </div>
 
-        {}
+        {/* TASTO CHIUDI GIORNATA */}
         <div className="pt-4 pb-8">
           <button
             onClick={toggleCompleted}
@@ -404,20 +402,18 @@ export default function App() {
             )}
           </button>
         </div>
-
       </main>
 
-      {}
+      {/* BARRA NAVIGAZIONE FISSA PER TELEFONO IN BASSO */}
       <div className="fixed bottom-0 w-full flex justify-between px-4 sm:hidden pb-4 pointer-events-none z-30">
-          <button onClick={() => setIsDarkMode(!isDarkMode)} className="p-3 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-200 rounded-full shadow-lg border border-slate-200 dark:border-slate-700 pointer-events-auto">
+          <button onClick={() => setIsDarkMode(!isDarkMode)} className="p-3 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-200 rounded-full shadow-lg border-2 border-slate-200 dark:border-slate-700 pointer-events-auto">
               {isDarkMode ? <Sun className="w-6 h-6 text-yellow-400" /> : <Moon className="w-6 h-6 text-slate-700" />}
           </button>
-          <button onClick={() => setShowTracker(true)} className="p-3 bg-emerald-500 text-white rounded-full shadow-lg border border-emerald-600 pointer-events-auto flex items-center gap-2 pr-4">
+          <button onClick={() => setShowTracker(true)} className="p-3 bg-emerald-500 text-white rounded-full shadow-lg border-2 border-emerald-600 pointer-events-auto flex items-center gap-2 pr-4">
               <PieChart className="w-6 h-6" /> <span className="font-bold">Bilancio</span>
           </button>
       </div>
 
-      {}
       {showTracker && (
         <Modal title="Bilancio Settimanale" icon={<PieChart className="w-6 h-6" />} onClose={() => setShowTracker(false)}>
           <div className="bg-emerald-50 dark:bg-emerald-900/20 border-2 border-emerald-200 dark:border-emerald-800/50 p-4 rounded-2xl mb-6 shadow-sm">
@@ -457,7 +453,6 @@ export default function App() {
         </Modal>
       )}
 
-      {}
       {showShoppingList && (
         <Modal 
           title="Spesa della Settimana" 
@@ -475,11 +470,21 @@ export default function App() {
             </div>
           }
         >
-          {/* Form per aggiungere cose extra alla spesa */}
+          {/* Promemoria Sconti Raggiunti */}
+          <div className="bg-amber-50 dark:bg-amber-900/20 p-4 rounded-2xl border-2 border-amber-200 dark:border-amber-800 mb-6 shadow-sm">
+            <h3 className="font-extrabold text-amber-900 dark:text-amber-400 mb-2 flex items-center gap-2">
+              <AlertCircle className="w-5 h-5" /> Promemoria Sconti
+            </h3>
+            <ul className="text-sm text-amber-800 dark:text-amber-300 space-y-1.5 ml-1 font-medium">
+              <li>• <strong>Giovedì:</strong> Carne in sconto al Gigante!</li>
+              <li>• <strong>Sabato & Domenica:</strong> Frutta e Verdura in offerta.</li>
+            </ul>
+          </div>
+
           <form onSubmit={addCustomItem} className="flex gap-2 mb-6">
             <input 
               type="text" 
-              placeholder="Aggiungi detersivi, scottex..." 
+              placeholder="Aggiungi detersivi, extra..." 
               value={newCustomItem}
               onChange={(e) => setNewCustomItem(e.target.value)}
               className="flex-1 px-4 py-3 rounded-xl border-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 focus:border-blue-500 outline-none"
@@ -489,7 +494,6 @@ export default function App() {
             </button>
           </form>
 
-          {/* Cose Extra Aggiunte */}
           {customShoppingItems.length > 0 && (
             <div className="mb-6 space-y-2">
               <h4 className="font-extrabold text-slate-500 dark:text-slate-400 uppercase text-xs tracking-wider mb-3">Cose Extra</h4>
@@ -538,7 +542,6 @@ export default function App() {
         </Modal>
       )}
 
-      {}
       {showInfo && (
         <Modal title="Regole della Dieta" icon={<AlertCircle className="w-6 h-6" />} onClose={() => setShowInfo(false)} color="amber">
           <div className="space-y-6 text-sm text-slate-600 dark:text-slate-300">
@@ -553,7 +556,6 @@ export default function App() {
                 <li className="flex gap-2"><CheckCircle2 className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5"/> <span>Bevi almeno <strong>1.5L di acqua</strong> al giorno.</span></li>
               </ul>
             </section>
-
             <section>
               <h4 className="font-bold text-slate-800 dark:text-slate-100 mb-2 text-base">Conversione Pesi (Crudo → Cotto)</h4>
               <div className="grid grid-cols-2 gap-2 text-xs">
@@ -569,7 +571,7 @@ export default function App() {
         </Modal>
       )}
 
-      {}
+      {/* STILI */}
       <style dangerouslySetInnerHTML={{__html: `
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
@@ -649,23 +651,23 @@ function Modal({ title, icon, children, onClose, color = "emerald", extraAction 
   return (
     <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-end sm:items-center justify-center sm:p-4 z-50 animate-in fade-in duration-200">
       <div className="bg-white dark:bg-slate-900 rounded-t-3xl sm:rounded-3xl max-w-lg w-full max-h-[90vh] flex flex-col shadow-2xl slide-in-from-bottom-8 sm:slide-in-from-bottom-0 sm:zoom-in-95 duration-300 border-2 border-slate-200 dark:border-slate-700">
-        <div className="p-6 flex justify-between items-center border-b-2 border-slate-100 dark:border-slate-800">
-          <h3 className={`text-2xl font-extrabold flex items-center gap-3 ${theme.text}`}>
-            <div className={`p-2.5 rounded-xl border border-white/20 ${theme.bg} ${theme.icon}`}>
+        <div className="p-4 sm:p-6 flex justify-between items-center border-b-2 border-slate-100 dark:border-slate-800">
+          <h3 className={`text-xl sm:text-2xl font-extrabold flex items-center gap-2 sm:gap-3 ${theme.text}`}>
+            <div className={`p-2 sm:p-2.5 rounded-xl border border-white/20 ${theme.bg} ${theme.icon}`}>
               {icon}
             </div>
             {title}
           </h3>
-          <div className="flex gap-2 items-center">
+          <div className="flex gap-1.5 sm:gap-2 items-center">
             {extraAction}
-            <button onClick={onClose} className="w-10 h-10 flex items-center justify-center bg-slate-100 dark:bg-slate-800 rounded-full text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 active:scale-90 transition-all font-bold text-xl border-2 border-transparent hover:border-slate-300 dark:hover:border-slate-600">✕</button>
+            <button onClick={onClose} className="w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center bg-slate-100 dark:bg-slate-800 rounded-full text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 active:scale-90 transition-all font-bold text-xl border-2 border-transparent hover:border-slate-300 dark:hover:border-slate-600">✕</button>
           </div>
         </div>
-        <div className="p-6 overflow-y-auto hide-scrollbar">
+        <div className="p-4 sm:p-6 overflow-y-auto hide-scrollbar">
           {children}
         </div>
-        <div className="p-5 border-t-2 border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 sm:rounded-b-3xl">
-          <button onClick={onClose} className={`w-full text-white font-extrabold text-lg py-4 rounded-2xl shadow-lg transition-all active:scale-[0.98] border-2 ${theme.btn}`}>Chiudi</button>
+        <div className="p-4 sm:p-5 border-t-2 border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 sm:rounded-b-3xl">
+          <button onClick={onClose} className={`w-full text-white font-extrabold text-base sm:text-lg py-3 sm:py-4 rounded-2xl shadow-lg transition-all active:scale-[0.98] border-2 ${theme.btn}`}>Chiudi</button>
         </div>
       </div>
     </div>
